@@ -1,4 +1,5 @@
 ﻿using BeOpen.Common.Cache;
+using ChatBotForSupport.DTO;
 using ChatBotForSupport.UpdateHandlers;
 using System.ComponentModel;
 using Telegram.Bot;
@@ -13,7 +14,13 @@ namespace ChatBotForSupport
         private static readonly string _publicKey = Configuration.Default.publicKey;
         private static int _offset = 0;
         public static bool StopProgram = false;
+
+        //AdminsDictionary Key - id админа в Телеграмм | Value - null
         public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\Cache\\adminsDictionary.json");
+        //MessageDictionary Key - id сообщения у админа об обращение | Value - от кого поступило обращение
+        public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\Cache\\messageDictionary.json");
+        //AnswerModeDictionary Key - Для кого включен режим ответа | Value - на какое сообщение включен режим
+        public static readonly SerializableCache<long, long> AnswerModeDictionary = new SerializableCache<long, long>($"{Directory.GetCurrentDirectory()}\\Cache\\messageDictionary.json");
 
         /// <summary>
         ///  The main entry point for the application.

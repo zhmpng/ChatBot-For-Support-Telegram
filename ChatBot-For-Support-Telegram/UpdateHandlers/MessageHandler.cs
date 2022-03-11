@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChatBotForSupport.DTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,8 +34,11 @@ namespace ChatBotForSupport.UpdateHandlers
                                 InlineKeyboardButton.WithCallbackData("Ответить")
                             }
                         });
-                        foreach(var admin in Program.AdminsDictionary.KeyValuePair)
-                            await bot.SendTextMessageAsync(admin.Key, $"Отправитель: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст сообщения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        {
+                            Telegram.Bot.Types.Message newMessage = await bot.SendTextMessageAsync(admin.Key, $"Отправитель: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст сообщения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                            Program.MessageDictionary.AddOrUpdate(newMessage.MessageId, new MessageDictionary() { UserId = message.From.Id, UserMessageId = message.MessageId});
+                        }
                         break;
 
                 }
@@ -53,12 +57,14 @@ namespace ChatBotForSupport.UpdateHandlers
                         if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
                         {
                             await bot.SendTextMessageAsync("441224506", $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                            await bot.SendTextMessageAsync(update.Message.From.Id, $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
                             Thread.Sleep(2000);
                             Program.StopProgram = true;
                         }
                         break;
                     case "/start":
-                        await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                        await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Привет, друг🤗\n"+
+                            "Отправляй свой вопрос/задание в этот чат-бот, напиши срок выполнения и свою цену. \nНаш эксперт ответит тебе в ближайшее время в этом чате.");
                         break;
                     case "/commandpanel":
                         if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
