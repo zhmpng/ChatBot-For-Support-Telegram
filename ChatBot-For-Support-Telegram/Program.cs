@@ -1,4 +1,5 @@
-﻿using ChatBotForSupport.UpdateHandlers;
+﻿using BeOpen.Common.Cache;
+using ChatBotForSupport.UpdateHandlers;
 using System.ComponentModel;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -11,7 +12,9 @@ namespace ChatBotForSupport
         public static BackgroundWorker _bw;
         private static readonly string _publicKey = Configuration.Default.publicKey;
         private static int _offset = 0;
-        private static bool _stopProgram = false;
+        public static bool StopProgram = false;
+        public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\Cache\\adminsDictionary.json");
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -20,14 +23,13 @@ namespace ChatBotForSupport
         {
             //ApplicationConfiguration.Initialize();
             //Application.Run(new Form1());
-            
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();
             });
             Console.WriteLine("Бот был успешно запущен!");
             inner.Wait();
-            do { } while (!_stopProgram);
+            do { } while (!StopProgram);
         }
 
         private static async void Bot()
@@ -76,19 +78,7 @@ namespace ChatBotForSupport
                         switch (update.Type)
                         {
                             case UpdateType.Message:
-                                if (update.Message.Type == Telegram.Bot.Types.Enums.MessageType.Text && update.Message.Text.Replace("@WeekendFacePolice_bot", "").ToLower() == ("/restart"))
-                                {
-                                    repeat = false;
-                                    _offset = 0;
-                                    throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update.Message.From.Username} - {update.Message.From.FirstName}");
-                                }
-                                if (update.Message.Type == Telegram.Bot.Types.Enums.MessageType.Text && update.Message.Text.Replace("@WeekendFacePolice_bot", "").ToLower() == ("/stop"))
-                                {
-                                    repeat = false;
-                                    _offset = 0;
-                                    _stopProgram = true;
-                                    throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update.Message.From.Username} - {update.Message.From.FirstName}");
-                                }
+                                MessageBase.MessageComandHandler(update, Bot);
                                 MessageBase.MessageHandler(update, Bot);
                                 break;
                             case UpdateType.CallbackQuery:
@@ -127,6 +117,7 @@ namespace ChatBotForSupport
             }
             catch (Exception ex)
             {
+                _offset = 0;
                 await Bot.SendTextMessageAsync("441224506", ex.Message + "-" + ex.StackTrace);
                 _bw.RunWorkerAsync(_publicKey);
             }

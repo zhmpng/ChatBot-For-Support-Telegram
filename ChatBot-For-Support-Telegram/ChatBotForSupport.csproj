@@ -14,6 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="BeOpen.Common.Cache">
+      <HintPath>..\packages\netstandard2.0\BeOpen.Common.Cache.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Configuration.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>

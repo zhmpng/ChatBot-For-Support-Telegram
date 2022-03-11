@@ -13,37 +13,75 @@ namespace ChatBotForSupport.UpdateHandlers
     public static class MessageBase
     {
         private static readonly char[] deaf = new char[] { '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!', '<' };
-        public async static void MessageHandler(Update update, TelegramBotClient bot)
+        public async static void MessageHandler(Update? update, TelegramBotClient bot)
         {
-            var message = update.Message ?? null;
-            if (message == null) return;
+            var message = update?.Message ?? null;
+            if (message == null || Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id)) return;
             else
                 switch (message?.Type)
                 {
                     case MessageType.Text:
-                        //await bot.SendTextMessageAsync("441224506", message?.Text);
-                        string replacedMessageName = update.Message.From.FirstName + " " + update.Message.From.LastName;
+                        string replacedMessageName = update?.Message?.From?.FirstName + " " + update?.Message?.From?.LastName;
                         foreach (char c in deaf)
                         {
                             replacedMessageName = replacedMessageName.Replace(c.ToString(), "");
                         }
-                        var keyboard = new Telegram.Bot.Types.ReplyMarkups.InlineKeyboardMarkup(new[]
+                        var keyboard = new InlineKeyboardMarkup(new[]
                         {
                             new []
                             {
                                 InlineKeyboardButton.WithCallbackData("Ответить")
                             }
                         });
-                        await bot.SendTextMessageAsync(message.Chat.Id, $"Отправитель: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст сообщения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                        foreach(var admin in Program.AdminsDictionary.KeyValuePair)
+                            await bot.SendTextMessageAsync(admin.Key, $"Отправитель: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст сообщения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
                         break;
 
                 }
-                //if (message?.Type == MessageType.Text && message?.Text?.Replace("@BeOpenChatBot", "").ToLower() == ("/restart"))
-                //{
-                //    repeat = false;
-                //    _offset = 0;
-                //    throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{message?.From?.Username} - {message?.From?.FirstName}");
-                //}
+        }
+
+        public async static void MessageComandHandler(Update? update, TelegramBotClient bot)
+        {
+            if(update?.Message?.Type == MessageType.Text)
+                switch (update?.Message?.Text?.ToLower())
+                {
+                    case "/restart":
+                        if(Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                            throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                        break;
+                    case "/stop":
+                        if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                        {
+                            await bot.SendTextMessageAsync("441224506", $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                            Thread.Sleep(2000);
+                            Program.StopProgram = true;
+                        }
+                        break;
+                    case "/start":
+                        await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                        break;
+                    case "/commandpanel":
+                        if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                        {
+                            var keyboard = new InlineKeyboardMarkup(new[]
+                            {
+                                new []
+                                {
+                                    InlineKeyboardButton.WithCallbackData("Доб. Админа")
+                                }
+                            });
+                            await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Выбери необходимую тебе функцию:", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                        }
+                        break;
+                    case "/commandlist":
+                        if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                            await bot.SendTextMessageAsync(update.Message.From.Id, $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                        else
+                            await bot.SendTextMessageAsync(update.Message.From.Id, $"Bot stopped by - @{update?.Message?.From?.Username} - {update?.Message?.From?.FirstName}");
+                        break;
+                    default:
+                        break;
+                }
         }
     }
 }
