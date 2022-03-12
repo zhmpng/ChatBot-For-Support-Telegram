@@ -16,11 +16,11 @@ namespace ChatBotForSupport
         public static bool StopProgram = false;
 
         //AdminsDictionary Key - id админа в Телеграмм | Value - null
-        public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\Cache\\adminsDictionary.json");
+        public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
         //MessageDictionary Key - id сообщения у админа об обращение | Value - от кого поступило обращение
-        public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\Cache\\messageDictionary.json");
+        public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\messageDictionary.json");
         //AnswerModeDictionary Key - Для кого включен режим ответа | Value - на какое сообщение включен режим
-        public static readonly SerializableCache<long, long> AnswerModeDictionary = new SerializableCache<long, long>($"{Directory.GetCurrentDirectory()}\\Cache\\messageDictionary.json");
+        public static readonly SerializableCache<long, AnswerModeDictionary> AnswerModeDictionary = new SerializableCache<long, AnswerModeDictionary>($"{Directory.GetCurrentDirectory()}\\answerModeDictionary.json");
 
         /// <summary>
         ///  The main entry point for the application.
@@ -30,6 +30,9 @@ namespace ChatBotForSupport
         {
             //ApplicationConfiguration.Initialize();
             //Application.Run(new Form1());
+
+            if (!AdminsDictionary.Contains(441224506))
+                AdminsDictionary.AddOrUpdate(441224506, "");
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();
@@ -85,10 +88,16 @@ namespace ChatBotForSupport
                         switch (update.Type)
                         {
                             case UpdateType.Message:
-                                MessageBase.MessageComandHandler(update, Bot);
-                                MessageBase.MessageHandler(update, Bot);
+                                if (AnswerModeDictionary.Contains(update.Message.From.Id))
+                                    await MessageBase.AdminResponseMessageHandlerAsync(update, Bot);
+                                else
+                                {
+                                    await MessageBase.MessageComandHandlerAsync(update, Bot);
+                                    await MessageBase.MessageHandlerAsync(update, Bot);
+                                }
                                 break;
                             case UpdateType.CallbackQuery:
+                                await CallbackBase.CallbackHandlerAsync(update, Bot);
                                 break;
                             case UpdateType.InlineQuery:
                                 break;

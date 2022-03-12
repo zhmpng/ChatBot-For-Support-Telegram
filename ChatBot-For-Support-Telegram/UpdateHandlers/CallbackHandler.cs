@@ -1,24 +1,51 @@
-﻿using System;
+﻿using ChatBotForSupport.DTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace ChatBotForSupport.UpdateHandlers
 {
-    public sealed class CallbackBase
+    public static class CallbackBase
     {
-        public async static void CallbackHandler(Update update, TelegramBotClient bot)
+        public async static Task CallbackHandlerAsync(Update update, TelegramBotClient bot)
         {
             var callbackQuery = update.CallbackQuery;
             switch (callbackQuery.Data)
             {
                 case "Ответить":
-                    await bot.SendTextMessageAsync(update.Message.From.Id, $"Введи сообщения которое будет отправлено как ответ🔽");
+                    var keyboard = new InlineKeyboardMarkup(new[]
+                         {
+                            new []
+                            {
+                                InlineKeyboardButton.WithCallbackData("Отменить ответ.")
+                            }
+                    });
+                    var responseNotification = await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Введи сообщение для отправки пользователю🔽", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                    Program.AnswerModeDictionary.AddOrUpdate(update.CallbackQuery.From.Id, new AnswerModeDictionary() { InlineMessageId = callbackQuery.Message.MessageId, ResponseNotificationId = responseNotification.MessageId });
                     break;
-                case "Доб. Админа":
+                case "Add Admin":
+                    await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Comming soon... 🤗");
+                    await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, callbackQuery.Message.MessageId);
+                    break;
+                case "Отменить ответ":
+                    var modeData = Program.AnswerModeDictionary.GetById(update.CallbackQuery.From.Id);
+                    Program.AnswerModeDictionary.Delete(update.CallbackQuery.From.Id);
+                    await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, modeData.ResponseNotificationId);
+                    break;
+                case "Restart":
+                    await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
+                    throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
+                case "Stop":
+                    foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        await bot.SendTextMessageAsync(admin.Key, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
+                    Thread.Sleep(2000);
+                    Program.StopProgram = true;
                     break;
             }
         }
