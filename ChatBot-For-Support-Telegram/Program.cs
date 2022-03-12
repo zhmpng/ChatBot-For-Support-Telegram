@@ -28,9 +28,6 @@ namespace ChatBotForSupport
         [STAThread]
         static void Main()
         {
-            //ApplicationConfiguration.Initialize();
-            //Application.Run(new Form1());
-
             if (!AdminsDictionary.Contains(441224506))
                 AdminsDictionary.AddOrUpdate(441224506, "");
             var inner = Task.Factory.StartNew(() =>
