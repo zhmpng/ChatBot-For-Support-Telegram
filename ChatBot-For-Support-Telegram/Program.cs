@@ -36,7 +36,7 @@ namespace ChatBotForSupport
             });
             Console.WriteLine("Бот был успешно запущен!");
             inner.Wait();
-            do { } while (!StopProgram);
+            do { } while (true);
         }
 
         private static async void Bot()

@@ -1,6 +1,7 @@
 ﻿using ChatBotForSupport.DTO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,8 +45,7 @@ namespace ChatBotForSupport.UpdateHandlers
                 case "Stop":
                     foreach (var admin in Program.AdminsDictionary.KeyValuePair)
                         await bot.SendTextMessageAsync(admin.Key, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
-                    Thread.Sleep(2000);
-                    Program.StopProgram = true;
+                    Process.GetCurrentProcess().Kill();
                     break;
             }
         }
