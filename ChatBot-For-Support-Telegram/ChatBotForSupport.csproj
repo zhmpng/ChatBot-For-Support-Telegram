@@ -5,9 +5,14 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>ChatBotForSupport</RootNamespace>
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWindowsForms>False</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>unnamed.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="unnamed.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Telegram.Bot" Version="17.0.0" />
@@ -17,22 +22,6 @@
     <Reference Include="BeOpen.Common.Cache">
       <HintPath>..\packages\netstandard2.0\BeOpen.Common.Cache.dll</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Configuration.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Configuration.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Configuration.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Configuration.Designer.cs</LastGenOutput>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

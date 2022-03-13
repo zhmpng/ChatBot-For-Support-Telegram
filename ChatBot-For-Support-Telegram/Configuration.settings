@@ -1,9 +1,0 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ChatBotForSupport" GeneratedClassName="Configuration">
-  <Profiles />
-  <Settings>
-    <Setting Name="publicKey" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">5097831844:AAHmsdnzLTuPGqwusOJm6MEi2_P1PiAUt-s</Value>
-    </Setting>
-  </Settings>
-</SettingsFile>

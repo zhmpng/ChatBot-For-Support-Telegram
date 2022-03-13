@@ -10,17 +10,19 @@ namespace ChatBotForSupport
 {
     internal static class Program
     {
-        public static BackgroundWorker _bw;
-        private static readonly string _publicKey = Configuration.Default.publicKey;
-        private static int _offset = 0;
-        public static bool StopProgram = false;
-
         //AdminsDictionary Key - id админа в Телеграмм | Value - null
         public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
         //MessageDictionary Key - id сообщения у админа об обращение | Value - от кого поступило обращение
         public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\messageDictionary.json");
         //AnswerModeDictionary Key - Для кого включен режим ответа | Value - на какое сообщение включен режим
         public static readonly SerializableCache<long, AnswerModeDictionary> AnswerModeDictionary = new SerializableCache<long, AnswerModeDictionary>($"{Directory.GetCurrentDirectory()}\\answerModeDictionary.json");
+        //BotPublicKeyDictionary Key - Название ключа | Value - Ключ Апи бота
+        public static readonly SerializableCache<string, string> BotPublicKeyDictionary = new SerializableCache<string, string>($"{Directory.GetCurrentDirectory()}\\botPublicKeyDictionary.json");
+
+        public static BackgroundWorker _bw;
+        private static readonly string _publicKey = BotPublicKeyDictionary.KeyValuePair.FirstOrDefault().Value;//Configuration.Default.publicKey;
+        private static int _offset = 0;
+        public static bool StopProgram = false;
 
         /// <summary>
         ///  The main entry point for the application.
