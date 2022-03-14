@@ -47,6 +47,10 @@ namespace ChatBotForSupport.UpdateHandlers
                         await bot.SendTextMessageAsync(admin.Key, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                     Process.GetCurrentProcess().Kill();
                     break;
+                case "Remove Admin":
+                    await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Comming soon... 🤗");
+                    await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, callbackQuery.Message.MessageId);
+                    break;
             }
         }
     }
