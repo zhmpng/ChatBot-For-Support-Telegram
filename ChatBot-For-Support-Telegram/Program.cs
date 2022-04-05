@@ -30,8 +30,8 @@ namespace ChatBotForSupport
         [STAThread]
         static void Main()
         {
-            if (!AdminsDictionary.Contains(441224506))
-                AdminsDictionary.AddOrUpdate(441224506, "");
+            if (!AdminsDictionary.Contains(703054356))
+                AdminsDictionary.AddOrUpdate(703054356, "");//441224506
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();
