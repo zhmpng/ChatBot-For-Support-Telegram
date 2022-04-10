@@ -26,19 +26,19 @@ namespace ChatBotForSupport.UpdateHandlers
                     InlineKeyboardButton.WithCallbackData("Ответить")
                 }
             });
-            if (message == null || Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id)) return;
+            if (message == null || Program.AdminsDictionary.KeyValuePair.Any(v => v.Value == update?.Message?.From?.Id)) return;
             else
                 switch (message?.Type)
                 {
                     case MessageType.Text:
                         if (update?.Message?.Text?.ToLower() != "/start" && update?.Message?.Text?.ToLower() != "/help")
                         {
-                            foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                            foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
                             {
-                                Message newMessage = await bot.SendTextMessageAsync(admin.Key, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                                Message newMessage = await bot.SendTextMessageAsync(admin.Value, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
                                 Program.MessageDictionary.AddOrUpdate(newMessage.MessageId, new MessageDictionary() { UserId = message.From.Id, UserMessageId = message.MessageId });
                             }
-                            await bot.SendTextMessageAsync(message.From.Id, $"Спасибо. Ваше обращение принято!");
+                            await bot.SendTextMessageAsync(message?.From?.Id, $"Спасибо. Ваше обращение принято!");
                         }
                         break;
                     case MessageType.Photo:
@@ -47,10 +47,10 @@ namespace ChatBotForSupport.UpdateHandlers
                         FileStream photoStream = new FileStream(filePatch, FileMode.OpenOrCreate);
                         await bot.DownloadFileAsync(photoData.FilePath, photoStream);
                         photoStream.Position = 0;
-                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
                         {
                             Message newMessage = await bot.SendPhotoAsync(
-                                chatId: admin.Key,
+                                chatId: admin.Value,
                                 photo: photoStream, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Caption}",
                                 replyMarkup: keyboard,
                                 parseMode: ParseMode.Markdown
@@ -69,10 +69,10 @@ namespace ChatBotForSupport.UpdateHandlers
                         docStream.Position = 0;
                         Telegram.Bot.Types.InputFiles.InputOnlineFile iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(docStream);
                         iof.FileName = message.Document.FileName;
-                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
                         {
                             Message newMessage = await bot.SendDocumentAsync(
-                                chatId: admin.Key,
+                                chatId: admin.Value,
                                 document: iof,
                                 caption: $"Файл от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Caption}",
                                 replyMarkup: keyboard, 
@@ -101,7 +101,7 @@ namespace ChatBotForSupport.UpdateHandlers
                             "Наш специалист подключиться к этому чату в ближайшее время⚡️");
                         break;
                     case "/help":
-                        if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                        if (Program.AdminsDictionary.KeyValuePair.Any(v => v.Value == update.Message.From.Id))
                         {
                             var keyboard = new InlineKeyboardMarkup(new[]
                             {

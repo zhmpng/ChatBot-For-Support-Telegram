@@ -10,8 +10,8 @@ namespace ChatBotForSupport
 {
     internal static class Program
     {
-        //AdminsDictionary Key - id админа в Телеграмм | Value - null
-        public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
+        //AdminsDictionary Key - предназначение учетной записи | Value - id админа в Телеграмм
+        public static readonly SerializableCache<string, long> AdminsDictionary = new SerializableCache<string, long>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
         //MessageDictionary Key - id сообщения у админа об обращение | Value - от кого поступило обращение
         public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\messageDictionary.json");
         //AnswerModeDictionary Key - Для кого включен режим ответа | Value - на какое сообщение включен режим
@@ -23,6 +23,8 @@ namespace ChatBotForSupport
         private static readonly string _publicKey = BotPublicKeyDictionary.KeyValuePair.FirstOrDefault().Value;//Configuration.Default.publicKey;
         private static int _offset = 0;
         public static bool StopProgram = false;
+        public static long SuperAdminId;
+        public static long DebugChatId;
 
         /// <summary>
         ///  The main entry point for the application.
@@ -30,8 +32,10 @@ namespace ChatBotForSupport
         [STAThread]
         static void Main()
         {
-            if (!AdminsDictionary.Contains(703054356))
-                AdminsDictionary.AddOrUpdate(703054356, "");//441224506
+            if (AdminsDictionary.TryGetById("superAdmin", out long adminId))
+                SuperAdminId = adminId;
+            if (AdminsDictionary.TryGetById("debugChat", out long debugChatId))
+                DebugChatId = debugChatId;
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();
@@ -79,7 +83,7 @@ namespace ChatBotForSupport
                     }
                     catch (Exception ex)
                     {
-                        await Bot.SendTextMessageAsync("441224506", "ERROR WHILE GETTIGN UPDATES - " + ex);
+                        await Bot.SendTextMessageAsync(DebugChatId, "ERROR WHILE GETTIGN UPDATES - " + ex);
                     }
                     foreach (var update in updates)
                     {
@@ -133,7 +137,7 @@ namespace ChatBotForSupport
             catch (Exception ex)
             {
                 _offset = 0;
-                await Bot.SendTextMessageAsync("441224506", ex.Message + "-" + ex.StackTrace);
+                await Bot.SendTextMessageAsync(DebugChatId, ex.Message + "-" + ex.StackTrace);
                 _bw.RunWorkerAsync(_publicKey);
             }
         }

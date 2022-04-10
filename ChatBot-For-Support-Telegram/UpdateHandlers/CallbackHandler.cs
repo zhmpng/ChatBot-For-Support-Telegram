@@ -50,7 +50,7 @@ namespace ChatBotForSupport.UpdateHandlers
                     throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                 case "Stop":
                     foreach (var admin in Program.AdminsDictionary.KeyValuePair)
-                        await bot.SendTextMessageAsync(admin.Key, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
+                        await bot.SendTextMessageAsync(admin.Value, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                     Process.GetCurrentProcess().Kill();
                     break;
                 case "Remove Admin":
