@@ -18,6 +18,8 @@ namespace ChatBotForSupport
         public static readonly SerializableCache<long, AnswerModeDictionary> AnswerModeDictionary = new SerializableCache<long, AnswerModeDictionary>($"{Directory.GetCurrentDirectory()}\\answerModeDictionary.json");
         //BotPublicKeyDictionary Key - Название ключа | Value - Ключ Апи бота
         public static readonly SerializableCache<string, string> BotPublicKeyDictionary = new SerializableCache<string, string>($"{Directory.GetCurrentDirectory()}\\botPublicKeyDictionary.json");
+        //BotMessageDictionary Key - Тип сообщения | Value - Текст сообщения
+        public static readonly SerializableCache<string, string> BotMessageDictionary = new SerializableCache<string, string>($"{Directory.GetCurrentDirectory()}\\botMessageDictionary.json");
 
         public static BackgroundWorker _bw;
         private static readonly string _publicKey = BotPublicKeyDictionary.KeyValuePair.FirstOrDefault().Value;//Configuration.Default.publicKey;
@@ -36,6 +38,12 @@ namespace ChatBotForSupport
                 SuperAdminId = adminId;
             if (AdminsDictionary.TryGetById("debugChat", out long debugChatId))
                 DebugChatId = debugChatId;
+            if (BotMessageDictionary.Count() == 0)
+            {
+                BotMessageDictionary.AddOrUpdate("start", "");
+                BotMessageDictionary.AddOrUpdate("help", "");
+            }
+
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();

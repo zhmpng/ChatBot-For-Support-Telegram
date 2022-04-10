@@ -93,14 +93,11 @@ namespace ChatBotForSupport.UpdateHandlers
                 switch (update?.Message?.Text?.ToLower())
                 {
                     case "/start":
-                        await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Привет, друг🤗\n"+
-                            "Нужна помощь с контрольной или экзаменом? А может не успеваешь сделать реферат или презентацию?\n" +
-                            "\n" +
-                            "Смело отправляй свой вопрос нам в виде файла, фотографии или сообщения.\n" +
-                            "\n" +
-                            "Наш специалист подключиться к этому чату в ближайшее время⚡️");
+                        Program.BotMessageDictionary.TryGetById("start", out string startMessage);
+                        await bot.SendTextMessageAsync(update.Message.Chat.Id, startMessage);
                         break;
                     case "/help":
+                        Program.BotMessageDictionary.TryGetById("help", out string helpMessage);
                         if (Program.AdminsDictionary.KeyValuePair.Any(v => v.Value == update.Message.From.Id))
                         {
                             var keyboard = new InlineKeyboardMarkup(new[]
@@ -120,7 +117,7 @@ namespace ChatBotForSupport.UpdateHandlers
                         }
                         else
                         {
-                            await bot.SendTextMessageAsync(update.Message.From.Id, $"Отправляй свой вопрос/задание в этот чат-бот, напиши срок выполнения и свою цену. \nНаш эксперт ответит тебе в ближайшее время в этом чате.");
+                            await bot.SendTextMessageAsync(update.Message.From.Id, helpMessage);
                         }
                         break;
                     default:
