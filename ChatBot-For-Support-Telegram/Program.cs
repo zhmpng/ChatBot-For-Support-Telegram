@@ -1,4 +1,4 @@
-﻿using BeOpen.Common.Cache;
+﻿using Common.Cache;
 using ChatBotForSupport.DTO;
 using ChatBotForSupport.UpdateHandlers;
 using System.ComponentModel;

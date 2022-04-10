@@ -31,7 +31,7 @@ namespace ChatBotForSupport.UpdateHandlers
                 switch (message?.Type)
                 {
                     case MessageType.Text:
-                        if (update?.Message?.Text?.ToLower() != "/start" || update?.Message?.Text?.ToLower() != "/help")
+                        if (update?.Message?.Text?.ToLower() != "/start" && update?.Message?.Text?.ToLower() != "/help")
                         {
                             foreach (var admin in Program.AdminsDictionary.KeyValuePair)
                             {
@@ -94,7 +94,11 @@ namespace ChatBotForSupport.UpdateHandlers
                 {
                     case "/start":
                         await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Привет, друг🤗\n"+
-                            "Отправляй свой вопрос/задание в этот чат-бот, напиши срок выполнения и свою цену. \nНаш эксперт ответит тебе в ближайшее время в этом чате.");
+                            "Нужна помощь с контрольной или экзаменом? А может не успеваешь сделать реферат или презентацию?\n" +
+                            "\n" +
+                            "Смело отправляй свой вопрос нам в виде файла, фотографии или сообщения.\n" +
+                            "\n" +
+                            "Наш специалист подключиться к этому чату в ближайшее время⚡️");
                         break;
                     case "/help":
                         if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
