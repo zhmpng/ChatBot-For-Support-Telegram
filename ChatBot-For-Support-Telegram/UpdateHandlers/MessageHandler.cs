@@ -26,18 +26,20 @@ namespace ChatBotForSupport.UpdateHandlers
                     InlineKeyboardButton.WithCallbackData("Ответить")
                 }
             });
-            if (message == null || Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id)) return;
+            if (message == null || Program.AdminsDictionary.KeyValuePair.Any(v => v.Value == update?.Message?.From?.Id)) return;
             else
                 switch (message?.Type)
                 {
                     case MessageType.Text:
-
-                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        if (update?.Message?.Text?.ToLower() != "/start" && update?.Message?.Text?.ToLower() != "/help")
                         {
-                            Message newMessage = await bot.SendTextMessageAsync(admin.Key, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
-                            Program.MessageDictionary.AddOrUpdate(newMessage.MessageId, new MessageDictionary() { UserId = message.From.Id, UserMessageId = message.MessageId});
+                            foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
+                            {
+                                Message newMessage = await bot.SendTextMessageAsync(admin.Value, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Text}", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                                Program.MessageDictionary.AddOrUpdate(newMessage.MessageId, new MessageDictionary() { UserId = message.From.Id, UserMessageId = message.MessageId });
+                            }
+                            await bot.SendTextMessageAsync(message?.From?.Id, $"Спасибо. Ваше обращение принято!");
                         }
-
                         break;
                     case MessageType.Photo:
                         var photoData = await bot.GetFileAsync(message.Photo[message.Photo.Count() - 1].FileId);
@@ -45,10 +47,10 @@ namespace ChatBotForSupport.UpdateHandlers
                         FileStream photoStream = new FileStream(filePatch, FileMode.OpenOrCreate);
                         await bot.DownloadFileAsync(photoData.FilePath, photoStream);
                         photoStream.Position = 0;
-                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
                         {
                             Message newMessage = await bot.SendPhotoAsync(
-                                chatId: admin.Key,
+                                chatId: admin.Value,
                                 photo: photoStream, $"Обращение от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Caption}",
                                 replyMarkup: keyboard,
                                 parseMode: ParseMode.Markdown
@@ -57,6 +59,7 @@ namespace ChatBotForSupport.UpdateHandlers
                         }
                         photoStream.Close();
                         System.IO.File.Delete(filePatch);
+                        await bot.SendTextMessageAsync(message.From.Id, $"Спасибо. Ваше обращение принято!");
                         break;
                     case MessageType.Document:
                         var docData = await bot.GetFileAsync(message.Document.FileId);
@@ -66,10 +69,10 @@ namespace ChatBotForSupport.UpdateHandlers
                         docStream.Position = 0;
                         Telegram.Bot.Types.InputFiles.InputOnlineFile iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(docStream);
                         iof.FileName = message.Document.FileName;
-                        foreach (var admin in Program.AdminsDictionary.KeyValuePair)
+                        foreach (var admin in Program.AdminsDictionary.KeyValuePair.Where(a => a.Value != Program.DebugChatId))
                         {
                             Message newMessage = await bot.SendDocumentAsync(
-                                chatId: admin.Key,
+                                chatId: admin.Value,
                                 document: iof,
                                 caption: $"Файл от: [{replacedMessageName}](tg://user?id={message?.From?.Id}) \nТекст обращения: {message?.Caption}",
                                 replyMarkup: keyboard, 
@@ -79,6 +82,7 @@ namespace ChatBotForSupport.UpdateHandlers
                         }
                         docStream.Close();
                         System.IO.File.Delete(docPatch);
+                        await bot.SendTextMessageAsync(message.From.Id, $"Спасибо. Ваше обращение принято!");
                         break;
                 }
         }
@@ -89,11 +93,12 @@ namespace ChatBotForSupport.UpdateHandlers
                 switch (update?.Message?.Text?.ToLower())
                 {
                     case "/start":
-                        await bot.SendTextMessageAsync(update.Message.Chat.Id, $"Привет, друг🤗\n"+
-                            "Отправляй свой вопрос/задание в этот чат-бот, напиши срок выполнения и свою цену. \nНаш эксперт ответит тебе в ближайшее время в этом чате.");
+                        Program.BotMessageDictionary.TryGetById("start", out string startMessage);
+                        await bot.SendTextMessageAsync(update.Message.Chat.Id, startMessage);
                         break;
                     case "/help":
-                        if (Program.AdminsDictionary.KeyValuePair.ContainsKey(update.Message.From.Id))
+                        Program.BotMessageDictionary.TryGetById("help", out string helpMessage);
+                        if (Program.AdminsDictionary.KeyValuePair.Any(v => v.Value == update.Message.From.Id))
                         {
                             var keyboard = new InlineKeyboardMarkup(new[]
                             {
@@ -112,7 +117,7 @@ namespace ChatBotForSupport.UpdateHandlers
                         }
                         else
                         {
-                            await bot.SendTextMessageAsync(update.Message.From.Id, $"Отправляй свой вопрос/задание в этот чат-бот, напиши срок выполнения и свою цену. \nНаш эксперт ответит тебе в ближайшее время в этом чате.");
+                            await bot.SendTextMessageAsync(update.Message.From.Id, helpMessage);
                         }
                         break;
                     default:
@@ -122,15 +127,52 @@ namespace ChatBotForSupport.UpdateHandlers
 
         public async static Task AdminResponseMessageHandlerAsync(Update? update, TelegramBotClient bot)
         {
+            Message message = update.Message;
             string replacedMessageName = GetUserName(update);
+            var modeData = Program.AnswerModeDictionary.GetById(update.Message.From.Id);
+            Program.AnswerModeDictionary.Delete(update.Message.From.Id);
+            await bot.DeleteMessageAsync(update.Message.From.Id, modeData.ResponseNotificationId);
+            var requestData = Program.MessageDictionary.GetById(modeData.InlineMessageId);
             switch (update?.Message?.Type)
             {
                 case MessageType.Text:
-                    var modeData = Program.AnswerModeDictionary.GetById(update.Message.From.Id);
-                    Program.AnswerModeDictionary.Delete(update.Message.From.Id);
-                    await bot.DeleteMessageAsync(update.Message.From.Id, modeData.ResponseNotificationId);
-                    var requestData = Program.MessageDictionary.GetById(modeData.InlineMessageId);
                     await bot.SendTextMessageAsync(requestData.UserId, $"Ответ эксперта: \n {update.Message.Text}", replyToMessageId: requestData.UserMessageId);
+                    await bot.SendTextMessageAsync(message.From.Id, $"Ваш ответ был доставлен.");
+                    break;
+                case MessageType.Photo:
+                    var photoData = await bot.GetFileAsync(message.Photo[message.Photo.Count() - 1].FileId);
+                    string filePatch = $"{Directory.GetCurrentDirectory()}\\{photoData.FilePath.Split(@"/").LastOrDefault()}";
+                    FileStream photoStream = new FileStream(filePatch, FileMode.OpenOrCreate);
+                    await bot.DownloadFileAsync(photoData.FilePath, photoStream);
+                    photoStream.Position = 0;
+
+                    await bot.SendPhotoAsync(
+                            chatId: requestData.UserId,
+                            photo: photoStream, $"Ответ эксперта: \n {update.Message.Text}",
+                            parseMode: ParseMode.Markdown
+                        );
+
+                    photoStream.Close();
+                    System.IO.File.Delete(filePatch);
+                    await bot.SendTextMessageAsync(message.From.Id, $"Ваш ответ был доставлен.");
+                    break;
+                case MessageType.Document:
+                    var docData = await bot.GetFileAsync(message.Document.FileId);
+                    string docPatch = $"{Directory.GetCurrentDirectory()}\\{docData.FilePath.Split(@"/").LastOrDefault()}";
+                    FileStream docStream = new FileStream(docPatch, FileMode.OpenOrCreate);
+                    await bot.DownloadFileAsync(docData.FilePath, docStream);
+                    docStream.Position = 0;
+                    Telegram.Bot.Types.InputFiles.InputOnlineFile iof = new Telegram.Bot.Types.InputFiles.InputOnlineFile(docStream);
+                    iof.FileName = message.Document.FileName;
+                    await bot.SendDocumentAsync(
+                            chatId: requestData.UserId,
+                            document: iof,
+                            caption: $"Ответ эксперта: \n {update.Message.Text}",
+                            parseMode: ParseMode.Markdown
+                        );
+                    docStream.Close();
+                    System.IO.File.Delete(docPatch);
+                    await bot.SendTextMessageAsync(message.From.Id, $"Ваш ответ был доставлен.");
                     break;
             }
 

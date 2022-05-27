@@ -20,31 +20,37 @@ namespace ChatBotForSupport.UpdateHandlers
             switch (callbackQuery.Data)
             {
                 case "Ответить":
-                    var keyboard = new InlineKeyboardMarkup(new[]
-                         {
+                    if (!Program.AnswerModeDictionary.Contains(update.CallbackQuery.From.Id))
+                    {
+                        var keyboard = new InlineKeyboardMarkup(new[]
+                           {
                             new []
                             {
                                 InlineKeyboardButton.WithCallbackData("Отменить ответ.")
                             }
-                    });
-                    var responseNotification = await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Введи сообщение для отправки пользователю🔽", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
-                    Program.AnswerModeDictionary.AddOrUpdate(update.CallbackQuery.From.Id, new AnswerModeDictionary() { InlineMessageId = callbackQuery.Message.MessageId, ResponseNotificationId = responseNotification.MessageId });
+                        });
+                        var responseNotification = await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Введи сообщение для отправки пользователю🔽", replyMarkup: keyboard, parseMode: ParseMode.Markdown);
+                        Program.AnswerModeDictionary.AddOrUpdate(update.CallbackQuery.From.Id, new AnswerModeDictionary() { InlineMessageId = callbackQuery.Message.MessageId, ResponseNotificationId = responseNotification.MessageId });
+                    }
                     break;
                 case "Add Admin":
                     await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Comming soon... 🤗");
                     await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, callbackQuery.Message.MessageId);
                     break;
                 case "Отменить ответ":
-                    var modeData = Program.AnswerModeDictionary.GetById(update.CallbackQuery.From.Id);
-                    Program.AnswerModeDictionary.Delete(update.CallbackQuery.From.Id);
-                    await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, modeData.ResponseNotificationId);
+                    if (Program.AnswerModeDictionary.Contains(update.CallbackQuery.From.Id))
+                    {
+                        var modeData = Program.AnswerModeDictionary.GetById(update.CallbackQuery.From.Id);
+                        Program.AnswerModeDictionary.Delete(update.CallbackQuery.From.Id);
+                        await bot.DeleteMessageAsync(update.CallbackQuery.From.Id, modeData.ResponseNotificationId);
+                    }
                     break;
                 case "Restart":
                     await bot.SendTextMessageAsync(update.CallbackQuery.From.Id, $"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                     throw new Exception($"Бот был перезапущен при помощи команды /restart , данную команду запустил @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                 case "Stop":
                     foreach (var admin in Program.AdminsDictionary.KeyValuePair)
-                        await bot.SendTextMessageAsync(admin.Key, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
+                        await bot.SendTextMessageAsync(admin.Value, $"Bot stopped by - @{update?.CallbackQuery?.From?.Username} - {update?.CallbackQuery?.From?.FirstName}");
                     Process.GetCurrentProcess().Kill();
                     break;
                 case "Remove Admin":

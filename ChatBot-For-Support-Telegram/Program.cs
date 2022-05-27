@@ -1,4 +1,4 @@
-﻿using BeOpen.Common.Cache;
+﻿using Common.Cache;
 using ChatBotForSupport.DTO;
 using ChatBotForSupport.UpdateHandlers;
 using System.ComponentModel;
@@ -10,19 +10,23 @@ namespace ChatBotForSupport
 {
     internal static class Program
     {
-        //AdminsDictionary Key - id админа в Телеграмм | Value - null
-        public static readonly SerializableCache<long, string> AdminsDictionary = new SerializableCache<long, string>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
+        //AdminsDictionary Key - предназначение учетной записи | Value - id админа в Телеграмм
+        public static readonly SerializableCache<string, long> AdminsDictionary = new SerializableCache<string, long>($"{Directory.GetCurrentDirectory()}\\adminsDictionary.json");
         //MessageDictionary Key - id сообщения у админа об обращение | Value - от кого поступило обращение
         public static readonly SerializableCache<long, MessageDictionary> MessageDictionary = new SerializableCache<long, MessageDictionary>($"{Directory.GetCurrentDirectory()}\\messageDictionary.json");
         //AnswerModeDictionary Key - Для кого включен режим ответа | Value - на какое сообщение включен режим
         public static readonly SerializableCache<long, AnswerModeDictionary> AnswerModeDictionary = new SerializableCache<long, AnswerModeDictionary>($"{Directory.GetCurrentDirectory()}\\answerModeDictionary.json");
         //BotPublicKeyDictionary Key - Название ключа | Value - Ключ Апи бота
         public static readonly SerializableCache<string, string> BotPublicKeyDictionary = new SerializableCache<string, string>($"{Directory.GetCurrentDirectory()}\\botPublicKeyDictionary.json");
+        //BotMessageDictionary Key - Тип сообщения | Value - Текст сообщения
+        public static readonly SerializableCache<string, string> BotMessageDictionary = new SerializableCache<string, string>($"{Directory.GetCurrentDirectory()}\\botMessageDictionary.json");
 
         public static BackgroundWorker _bw;
         private static readonly string _publicKey = BotPublicKeyDictionary.KeyValuePair.FirstOrDefault().Value;//Configuration.Default.publicKey;
         private static int _offset = 0;
         public static bool StopProgram = false;
+        public static long SuperAdminId;
+        public static long DebugChatId;
 
         /// <summary>
         ///  The main entry point for the application.
@@ -30,8 +34,16 @@ namespace ChatBotForSupport
         [STAThread]
         static void Main()
         {
-            if (!AdminsDictionary.Contains(441224506))
-                AdminsDictionary.AddOrUpdate(441224506, "");
+            if (AdminsDictionary.TryGetById("superAdmin", out long adminId))
+                SuperAdminId = adminId;
+            if (AdminsDictionary.TryGetById("debugChat", out long debugChatId))
+                DebugChatId = debugChatId;
+            if (BotMessageDictionary.Count() == 0)
+            {
+                BotMessageDictionary.AddOrUpdate("start", "");
+                BotMessageDictionary.AddOrUpdate("help", "");
+            }
+
             var inner = Task.Factory.StartNew(() =>
             {
                 Bot();
@@ -79,7 +91,7 @@ namespace ChatBotForSupport
                     }
                     catch (Exception ex)
                     {
-                        await Bot.SendTextMessageAsync("441224506", "ERROR WHILE GETTIGN UPDATES - " + ex);
+                        await Bot.SendTextMessageAsync(DebugChatId, "ERROR WHILE GETTIGN UPDATES - " + ex);
                     }
                     foreach (var update in updates)
                     {
@@ -133,7 +145,7 @@ namespace ChatBotForSupport
             catch (Exception ex)
             {
                 _offset = 0;
-                await Bot.SendTextMessageAsync("441224506", ex.Message + "-" + ex.StackTrace);
+                await Bot.SendTextMessageAsync(DebugChatId, ex.Message + "-" + ex.StackTrace);
                 _bw.RunWorkerAsync(_publicKey);
             }
         }
